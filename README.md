@@ -14,6 +14,17 @@ from retinal fundus images using deep learning.
 
 ---
 
+## Sample Retina Images
+
+Healthy Retina:
+https://retina-ai-detection.onrender.com/static/sample_images/healthy.png
+
+Mild Diabetic Retinopathy:
+https://retina-ai-detection.onrender.com/static/sample_images/mild.png
+
+Severe Diabetic Retinopathy:
+https://retina-ai-detection.onrender.com/static/sample_images/severe.png
+
 ## Overview
 
 Diabetic retinopathy (DR) is a leading cause of blindness worldwide. Early
