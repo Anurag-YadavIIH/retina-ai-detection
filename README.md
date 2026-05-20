@@ -17,13 +17,13 @@ from retinal fundus images using deep learning.
 ## Sample Retina Images
 
 Healthy Retina:
-https://retina-ai-detection.onrender.com/static/sample_images/healthy.png
+https://retina-ai-detection.onrender.com/static/sample_images/Healthy.png
 
 Mild Diabetic Retinopathy:
-https://retina-ai-detection.onrender.com/static/sample_images/mild.png
+https://retina-ai-detection.onrender.com/static/sample_images/Mild.png
 
 Severe Diabetic Retinopathy:
-https://retina-ai-detection.onrender.com/static/sample_images/severe.png
+https://retina-ai-detection.onrender.com/static/sample_images/Severe.png
 
 ## Overview
 
