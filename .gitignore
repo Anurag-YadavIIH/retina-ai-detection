@@ -1,0 +1,34 @@
+# Virtual environment — never push this
+# Virtual environments
+venv/
+env/
+retina-ai/
+.conda/
+.env
+
+# Python cache files — auto-generated, not needed
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Trained model (large file — handle separately)
+model/*.pth
+
+# Uploaded images from the web app
+static/uploads/*
+!static/uploads/.gitkeep
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/settings.json
+*.idea/
+
+# Environment variable files (contain secrets)
+.env
