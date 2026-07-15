@@ -123,7 +123,7 @@
     <div class="container">
       <p>Built with PyTorch &bull; ResNet18 Transfer Learning &bull; Flask &bull; Grad-CAM</p>
       <p>
-        <a href="https://github.com/yourusername/retina-ai-detection"
+        <a href="https://github.com/Anurag-YadavIIH/retina-ai-detection"
            target="_blank">View on GitHub</a>
       </p>
     </div>
@@ -239,8 +239,8 @@
 
       // Badge
       const badge = document.getElementById("result-badge");
-      badge.textContent  = data.predicted_class.replace("_", " ");
-      badge.style.background = severityColor(data.color);
+      badge.textContent  = data.label || data.predicted_class.replace("_", " ");
+      badge.style.background = data.color;
 
       // Confidence
       document.getElementById("confidence-value").textContent =
@@ -248,7 +248,7 @@
       document.getElementById("confidence-fill").style.width =
         data.confidence + "%";
       document.getElementById("confidence-fill").style.background =
-        severityColor(data.color);
+        data.color;
 
       // Description
       document.getElementById("result-description").textContent =
@@ -272,7 +272,7 @@
               <div class="score-row__bar"
                    style="width:${pct}%;
                           background:${cls === data.predicted_class
-                            ? severityColor(data.color) : "#94a3b8"}">
+                            ? data.color : "#94a3b8"}">
               </div>
             </div>
             <span class="score-row__pct">${pct}%</span>
@@ -281,15 +281,6 @@
 
       // Scroll to results
       resultsSection.scrollIntoView({ behavior: "smooth" });
-    }
-
-    // Map Flask color names to CSS hex values for the bars
-    function severityColor(color) {
-      const map = {
-        green: "#22c55e", yellowgreen: "#84cc16",
-        orange: "#f97316", orangered: "#ef4444", red: "#dc2626"
-      };
-      return map[color] || "#64748b";
     }
   </script>
 

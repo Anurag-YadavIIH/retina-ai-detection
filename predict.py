@@ -16,7 +16,13 @@ import torch.nn as nn
 from torchvision import models
 from PIL import Image
 
-from utils.preprocess import get_inference_transforms, CLASS_NAMES
+from utils.preprocess import (
+    get_inference_transforms,
+    CLASS_NAMES,
+    CLASS_LABELS,
+    CLASS_DESCRIPTIONS,
+    CLASS_COLORS,
+)
 
 # ─────────────────────────────────────────────
 # CONFIGURATION
@@ -25,24 +31,6 @@ from utils.preprocess import get_inference_transforms, CLASS_NAMES
 MODEL_PATH  = "model/retina_model.pth"
 NUM_CLASSES = 5
 DEVICE      = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-# Severity descriptions shown in the web UI
-CLASS_DESCRIPTIONS = {
-    "No_DR":          "No Diabetic Retinopathy detected. Retina appears healthy.",
-    "Mild":           "Mild DR: Minor abnormalities present. Monitoring advised.",
-    "Moderate":       "Moderate DR: Significant abnormalities. Treatment recommended.",
-    "Severe":         "Severe DR: Extensive damage. Urgent medical attention required.",
-    "Proliferate_DR": "Proliferative DR: Most severe stage. Immediate treatment critical.",
-}
-
-# Severity colour for the UI badge (CSS colour names)
-CLASS_COLORS = {
-    "No_DR":          "green",
-    "Mild":           "yellowgreen",
-    "Moderate":       "orange",
-    "Severe":         "orangered",
-    "Proliferate_DR": "red",
-}
 
 
 # ─────────────────────────────────────────────
@@ -67,9 +55,15 @@ def load_model():
     model = models.resnet18(weights=None)   # no pretrained weights — we load our own
     model.fc = nn.Linear(model.fc.in_features, NUM_CLASSES)
 
-    # Load the saved weights
+    # Load the saved weights. Support both formats:
+    #   - a checkpoint dict with a "model_state_dict" key (train.py's format)
+    #   - a raw state_dict saved directly via torch.save(model.state_dict(), ...)
     checkpoint = torch.load(MODEL_PATH, map_location=DEVICE)
-    model.load_state_dict(checkpoint["model_state_dict"])
+    if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
+        state_dict = checkpoint["model_state_dict"]
+    else:
+        state_dict = checkpoint
+    model.load_state_dict(state_dict)
 
     model = model.to(DEVICE)
     model.eval()   # IMPORTANT: always set eval mode for inference
@@ -211,11 +205,12 @@ def predict(image_path):
 
     Returns:
         dict with keys:
-            predicted_class  - e.g. "Moderate"
+            predicted_class  - raw class name, e.g. "Moderate"
+            label            - human-readable name, e.g. "Moderate DR"
             confidence       - e.g. 87.3  (percentage)
             all_scores       - dict of class→probability for all 5 classes
             description      - human-readable severity description
-            color            - CSS color for the UI badge
+            color            - hex color for the UI badge, e.g. "#f97316"
             heatmap_path     - path to the Grad-CAM overlay image
     """
     model = load_model()
@@ -270,6 +265,7 @@ def predict(image_path):
 
     return {
         "predicted_class": predicted_class,
+        "label":           CLASS_LABELS[predicted_class],
         "confidence":      round(confidence, 1),
         "all_scores":      all_scores,
         "description":     CLASS_DESCRIPTIONS[predicted_class],

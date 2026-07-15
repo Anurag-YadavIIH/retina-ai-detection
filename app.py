@@ -101,6 +101,7 @@ def predict_route():
         return jsonify({
             "success":          True,
             "predicted_class":  result["predicted_class"],
+            "label":            result["label"],
             "confidence":       result["confidence"],
             "all_scores":       result["all_scores"],
             "description":      result["description"],
