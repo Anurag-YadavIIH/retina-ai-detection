@@ -9,6 +9,7 @@
 import os
 import copy
 import time
+from collections import Counter
 
 import torch
 import torch.nn as nn
@@ -27,7 +28,8 @@ from utils.preprocess import (
 # ─────────────────────────────────────────────
 
 DATASET_PATH  = "dataset"   # path to your dataset folder
-MODEL_SAVE_PATH = "model/retina_model.pth"
+MODEL_SAVE_PATH = "model/retina_model.pth"          # baseline checkpoint — NOT overwritten by this run
+WEIGHTED_MODEL_SAVE_PATH = "model/retina_model_weighted.pth"  # class-weighted-loss experiment output
 NUM_CLASSES   = 5                  # No_DR, Mild, Moderate, Severe, Proliferative
 BATCH_SIZE    = 32                 # images processed together; lower if you run out of RAM
 NUM_EPOCHS    = 10                 # how many full passes through the dataset
@@ -54,6 +56,32 @@ print(f"Using device: {device}")
 # It assigns integer labels automatically based on folder name order.
 # ─────────────────────────────────────────────
 
+def compute_class_weights(full_dataset):
+    """
+    Inverse-frequency class weights computed from the FULL (pre-split)
+    dataset, so the weighting reflects the true class distribution rather
+    than whatever happens to land in the train split:
+
+        weight[c] = total / (num_classes * count[c])
+
+    Then normalised so the weights average to 1.0 (keeps the overall loss
+    magnitude comparable to the unweighted baseline run).
+    """
+    num_classes = len(full_dataset.classes)
+    counts = Counter(full_dataset.targets)
+    total = len(full_dataset.targets)
+
+    raw_weights = [total / (num_classes * counts[i]) for i in range(num_classes)]
+    mean_weight = sum(raw_weights) / num_classes
+    weights = [w / mean_weight for w in raw_weights]
+
+    print("\nClass weights (inverse-frequency, normalised to mean 1.0):")
+    for i, name in enumerate(full_dataset.classes):
+        print(f"  {name:<15} count={counts[i]:>5}  weight={weights[i]:.4f}")
+
+    return torch.tensor(weights, dtype=torch.float32)
+
+
 def load_datasets(dataset_path):
     """Load and split the dataset into train and validation sets."""
 
@@ -65,6 +93,9 @@ def load_datasets(dataset_path):
 
     print(f"Total images found: {len(full_dataset)}")
     print(f"Classes detected:   {full_dataset.classes}")
+
+    # Compute class weights from the FULL dataset, before splitting
+    class_weights = compute_class_weights(full_dataset)
 
     # Split: 80% train, 20% validation
     val_size   = int(len(full_dataset) * VAL_SPLIT)
@@ -85,7 +116,7 @@ def load_datasets(dataset_path):
     print(f"Training images:    {train_size}")
     print(f"Validation images:  {val_size}")
 
-    return train_dataset, val_dataset
+    return train_dataset, val_dataset, class_weights
 
 
 # ─────────────────────────────────────────────
@@ -161,13 +192,16 @@ def build_model(num_classes):
 # STEP 4: LOSS FUNCTION AND OPTIMISER
 # ─────────────────────────────────────────────
 
-def build_optimizer(model):
+def build_optimizer(model, class_weights):
     """
     CrossEntropyLoss: standard for multi-class classification.
+    Weighted by inverse class frequency (see compute_class_weights) so the
+    minority Severe / Proliferate_DR classes contribute proportionally more
+    to the loss instead of being drowned out by No_DR/Moderate.
     Adam optimiser: self-adjusting learning rate, works great for most tasks.
     We only pass parameters that require gradients (our new fc layer).
     """
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss(weight=class_weights.to(device))
 
     # Only optimise the trainable parameters (the new final layer)
     optimizer = optim.Adam(
@@ -276,14 +310,14 @@ def train_model():
     print("=" * 55)
 
     # 1. Load data
-    train_dataset, val_dataset = load_datasets(DATASET_PATH)
+    train_dataset, val_dataset, class_weights = load_datasets(DATASET_PATH)
     train_loader, val_loader   = create_dataloaders(train_dataset, val_dataset)
 
     # 2. Build model
     model = build_model(NUM_CLASSES)
 
     # 3. Build optimizer
-    criterion, optimizer, scheduler = build_optimizer(model)
+    criterion, optimizer, scheduler = build_optimizer(model, class_weights)
 
     # 4. Track the best model so far
     best_val_acc  = 0.0
@@ -335,6 +369,9 @@ def train_model():
     print(f"Best validation accuracy: {best_val_acc:.2f}%")
 
     # 5. Restore and save best weights
+    # NOTE: saved ONLY to WEIGHTED_MODEL_SAVE_PATH for this class-weighted-loss
+    # experiment — MODEL_SAVE_PATH (the baseline checkpoint) is intentionally
+    # left untouched so before/after per-class metrics stay comparable.
     model.load_state_dict(best_model_wts)
     os.makedirs("model", exist_ok=True)
     torch.save({
@@ -342,9 +379,9 @@ def train_model():
         "class_names":      CLASS_NAMES,
         "num_classes":      NUM_CLASSES,
         "val_accuracy":     best_val_acc,
-    }, MODEL_SAVE_PATH)
+    }, WEIGHTED_MODEL_SAVE_PATH)
 
-    print(f"\nModel saved to: {MODEL_SAVE_PATH}")
+    print(f"\nModel saved to: {WEIGHTED_MODEL_SAVE_PATH}")
 
     # 6. Plot training curves
     plot_training_history(history)
