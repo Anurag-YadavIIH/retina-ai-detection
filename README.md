@@ -80,9 +80,72 @@ ResNet18 (transfer learning, fine-tuned final layer)
 
 ## Results
 
+Evaluated with [`evaluate.py`](evaluate.py) on the held-out validation split
+(550 images, the same 80/20 `random_split` with seed 42 that `train.py`
+uses) — no retraining, just running the existing `model/retina_model.pth`
+through inference. Raw numbers are in
+[`evaluation_results.json`](evaluation_results.json).
+
+This is a 5-class *ordinal* grading problem, but the metric that matters
+most for a screening tool is simpler: **does the model catch anyone who
+needs a referral?** Both views are below.
+
+### Referable-DR screening
+
+"Referable" = Moderate DR, Severe DR, or Proliferative DR (i.e. anything
+beyond mild/no disease that should prompt an ophthalmology referral).
+The operating threshold was chosen to hit at least 90% sensitivity.
+
 | Metric | Value |
 |---|---|
-| Best validation accuracy | ~71% |
+| Sensitivity @ threshold | 90.8% |
+| Specificity @ threshold | 79.8% |
+| ROC-AUC | 0.918 |
+| PR-AUC | 0.903 |
+| Operating threshold | 0.489 |
+| Referable-DR prevalence (val set) | 49.6% |
+
+![ROC and PR curves](static/roc_pr_curves.png)
+
+### Ordinal grading performance
+
+| Metric | Value |
+|---|---|
+| **Quadratic-weighted Cohen's kappa** | **0.675** |
+| Overall accuracy (context only, not the primary metric) | 68.5% |
+
+Quadratic-weighted kappa is computed against the true clinical severity
+order (No DR &lt; Mild &lt; Moderate &lt; Severe &lt; Proliferative), not
+the alphabetical index order the model was trained with — see the note
+in [`utils/preprocess.py`](utils/preprocess.py) about `CLASS_NAMES`.
+
+### Per-class precision / recall / F1
+
+| Class | Precision | Recall | F1 | Support |
+|---|---|---|---|---|
+| No DR (Healthy) | 0.865 | 0.923 | 0.894 | 209 |
+| Mild DR | 0.697 | 0.338 | 0.455 | 68 |
+| Moderate DR | 0.559 | 0.844 | 0.673 | 180 |
+| Severe DR | 0.000 | 0.000 | 0.000 | 41 |
+| Proliferative DR | 0.409 | 0.173 | 0.243 | 52 |
+
+![Confusion matrix](static/confusion_matrix.png)
+
+**Honest take:** the minority severe classes are the weak point. Severe DR
+(41 val images, only 190 in the whole dataset) is never correctly
+identified as its own class — it's predicted mostly as Moderate DR instead
+— and Proliferative DR recall is also low (17%). Both classes have the
+least training data of the five, and their symptoms overlap heavily with
+Moderate DR, which is where most of their misclassifications land. The
+referable-DR screening numbers above look much better than the per-class
+table because Moderate/Severe/Proliferative are grouped together for that
+purpose, so a Severe case predicted as Moderate still correctly triggers a
+referral — but as a 5-way grading tool, this model should not be trusted
+to distinguish Severe from Proliferative DR without more data for those
+classes.
+
+| Reference | Value |
+|---|---|
 | Training epochs | 10 |
 | Model size | ~45 MB |
 | Inference time | ~0.3s (CPU) |
@@ -91,7 +154,7 @@ ResNet18 (transfer learning, fine-tuned final layer)
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/yourusername/retina-ai-detection.git
+git clone https://github.com/Anurag-YadavIIH/retina-ai-detection.git
 cd retina-ai-detection
 
 # 2. Create and activate virtual environment
@@ -150,4 +213,4 @@ MIT License. See LICENSE file for details.
 
 ## Author
 
-Your Name — [github.com/Anurag-YadavIIH](https://github.com/Anurag-YadavIIH/retina-ai-detection)
+Anurag Yadav — [github.com/Anurag-YadavIIH](https://github.com/Anurag-YadavIIH/retina-ai-detection)
