@@ -114,9 +114,10 @@ body {
 
 /* ── IMAGE GRID ────────────────────────────────── */
 .image-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;
 }
 .image-grid__label { font-size: .85rem; font-weight: 600; margin-bottom: .5rem; text-align: center; }
+.image-grid__caption { font-size: .78rem; color: var(--text-muted); margin-top: .5rem; text-align: center; }
 .result-img { width: 100%; border-radius: 8px; border: 1px solid var(--border); object-fit: contain; }
 
 /* ── ALL SCORES ────────────────────────────────── */
@@ -140,6 +141,10 @@ body {
 .footer p + p { margin-top: .4rem; }
 .footer a { color: #60a5fa; text-decoration: none; }
 .footer a:hover { text-decoration: underline; }
+
+@media (max-width: 900px) {
+  .image-grid { grid-template-columns: 1fr 1fr; }
+}
 
 @media (max-width: 560px) {
   .image-grid { grid-template-columns: 1fr; }

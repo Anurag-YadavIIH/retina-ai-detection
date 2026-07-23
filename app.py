@@ -13,6 +13,19 @@ from werkzeug.utils import secure_filename
 
 from predict import predict
 
+# Exudate segmentation is a best-effort add-on: if the package, its
+# dependencies, or the checkpoint aren't available, the app must still
+# work with classifier + Grad-CAM only. Guard the import itself, not just
+# calls to it — a missing dependency at import time would otherwise crash
+# the whole app before it even starts.
+try:
+    from segmentation.seg_predict import segment_exudates
+except Exception as e:
+    print(f"Segmentation feature unavailable ({e}) — running classifier-only.")
+
+    def segment_exudates(image_path, output_path):
+        return None
+
 # ─────────────────────────────────────────────
 # APP CONFIGURATION
 # ─────────────────────────────────────────────
@@ -98,16 +111,34 @@ def predict_route():
         heatmap_url = "/" + result["heatmap_path"].replace("\\", "/")
         uploaded_url = f"/static/uploads/{unique_name}"
 
+        # ── Exudate segmentation (best-effort) ─────────
+        # Never let a segmentation failure break the classifier response —
+        # this is wrapped in its own try/except on top of segment_exudates()
+        # already returning None instead of raising, as defense in depth.
+        exudate_overlay_url = None
+        lesion_area_pct = None
+        try:
+            base_name = os.path.splitext(unique_name)[0]
+            exudate_path = os.path.join(app.config["UPLOAD_FOLDER"], f"{base_name}_exudates.jpg")
+            seg_result = segment_exudates(save_path, exudate_path)
+            if seg_result is not None:
+                exudate_overlay_url = "/" + seg_result["overlay_path"].replace("\\", "/")
+                lesion_area_pct = seg_result["lesion_area_pct"]
+        except Exception as e:
+            print(f"Segmentation error (ignored, classifier results still returned): {e}")
+
         return jsonify({
-            "success":          True,
-            "predicted_class":  result["predicted_class"],
-            "label":            result["label"],
-            "confidence":       result["confidence"],
-            "all_scores":       result["all_scores"],
-            "description":      result["description"],
-            "color":            result["color"],
-            "heatmap_url":      heatmap_url,
-            "uploaded_url":     uploaded_url,
+            "success":             True,
+            "predicted_class":     result["predicted_class"],
+            "label":               result["label"],
+            "confidence":          result["confidence"],
+            "all_scores":          result["all_scores"],
+            "description":         result["description"],
+            "color":               result["color"],
+            "heatmap_url":         heatmap_url,
+            "uploaded_url":        uploaded_url,
+            "exudate_overlay_url": exudate_overlay_url,
+            "lesion_area_pct":     lesion_area_pct,
         })
 
     except Exception as e:

@@ -85,7 +85,7 @@
       <!-- Clinical description -->
       <p class="result-description" id="result-description"></p>
 
-      <!-- Images side by side: original + heatmap -->
+      <!-- Images side by side: original + heatmap + exudate segmentation -->
       <div class="image-grid">
         <div class="image-grid__item">
           <p class="image-grid__label">Original Image</p>
@@ -94,6 +94,13 @@
         <div class="image-grid__item">
           <p class="image-grid__label">Grad-CAM Heatmap</p>
           <img id="result-heatmap" class="result-img" src="" alt="Heatmap"/>
+        </div>
+        <!-- Hidden by JS if exudate_overlay_url comes back null (segmentation
+             disabled/unavailable) -->
+        <div class="image-grid__item" id="exudate-panel">
+          <p class="image-grid__label">Exudate Segmentation</p>
+          <img id="result-exudate" class="result-img" src="" alt="Exudate segmentation"/>
+          <p class="image-grid__caption" id="exudate-caption"></p>
         </div>
       </div>
 
@@ -109,6 +116,11 @@
         educational purposes only. It is not a medical device and should not
         be used for clinical diagnosis. Always consult a qualified
         ophthalmologist for medical advice.
+        <br/><br/>
+        <strong>Segmentation scope:</strong> The exudate segmentation panel
+        (when shown) detects <strong>hard exudates only</strong>. It does not
+        detect microaneurysms, haemorrhages, soft exudates, or any other
+        diabetic retinopathy lesion type.
       </div>
 
       <button class="btn btn--secondary" id="new-analysis-btn">
@@ -257,6 +269,19 @@
       // Images
       document.getElementById("result-original").src = data.uploaded_url;
       document.getElementById("result-heatmap").src  = data.heatmap_url;
+
+      // Exudate segmentation — hide the panel gracefully if unavailable
+      // rather than showing a broken image
+      const exudatePanel = document.getElementById("exudate-panel");
+      if (data.exudate_overlay_url) {
+        exudatePanel.style.display = "block";
+        document.getElementById("result-exudate").src = data.exudate_overlay_url;
+        document.getElementById("exudate-caption").textContent =
+          `Lesion area: ${data.lesion_area_pct}% of image` +
+          " — Hard exudates detected by U-Net (Dice 0.63 on held-out test set)";
+      } else {
+        exudatePanel.style.display = "none";
+      }
 
       // All-class probability bars
       const container = document.getElementById("scores-container");
