@@ -1,0 +1,63 @@
+{
+  "n_splits": 5,
+  "seed": 42,
+  "folds": [
+    {
+      "fold": 1,
+      "best_epoch": 71,
+      "val_dice": 0.5834198810837485,
+      "val_iou": 0.4275695193897594,
+      "stopped_early": true,
+      "train_size": 43,
+      "val_size": 11,
+      "checkpoint": "C:\\Users\\rites_ljry4pu\\Documents\\retina-ai-detection\\model\\exudate_unet_fold1.pth"
+    },
+    {
+      "fold": 2,
+      "best_epoch": 50,
+      "val_dice": 0.5679987154223702,
+      "val_iou": 0.4116391187364405,
+      "stopped_early": true,
+      "train_size": 43,
+      "val_size": 11,
+      "checkpoint": "C:\\Users\\rites_ljry4pu\\Documents\\retina-ai-detection\\model\\exudate_unet_fold2.pth"
+    },
+    {
+      "fold": 3,
+      "best_epoch": 32,
+      "val_dice": 0.5290898138826544,
+      "val_iou": 0.37660767273469403,
+      "stopped_early": true,
+      "train_size": 43,
+      "val_size": 11,
+      "checkpoint": "C:\\Users\\rites_ljry4pu\\Documents\\retina-ai-detection\\model\\exudate_unet_fold3.pth"
+    },
+    {
+      "fold": 4,
+      "best_epoch": 73,
+      "val_dice": 0.6491968794302507,
+      "val_iou": 0.4877280051057989,
+      "stopped_early": true,
+      "train_size": 43,
+      "val_size": 11,
+      "checkpoint": "C:\\Users\\rites_ljry4pu\\Documents\\retina-ai-detection\\model\\exudate_unet_fold4.pth"
+    },
+    {
+      "fold": 5,
+      "best_epoch": 83,
+      "val_dice": 0.46965520083904266,
+      "val_iou": 0.32918345332145693,
+      "stopped_early": true,
+      "train_size": 44,
+      "val_size": 10,
+      "checkpoint": "C:\\Users\\rites_ljry4pu\\Documents\\retina-ai-detection\\model\\exudate_unet_fold5.pth"
+    }
+  ],
+  "mean_dice": 0.5598720981316133,
+  "std_dice": 0.05947452248699883,
+  "mean_iou": 0.4065455538576299,
+  "std_iou": 0.052800972047931334,
+  "best_fold": 4,
+  "best_fold_checkpoint": "C:\\Users\\rites_ljry4pu\\Documents\\retina-ai-detection\\model\\exudate_unet_fold4.pth",
+  "total_time_minutes": 96.20994602044424
+}
