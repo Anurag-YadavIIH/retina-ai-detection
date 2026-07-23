@@ -139,7 +139,7 @@ class GradCAM:
         cam = cam.squeeze()                                             # [H, W]
 
         # ReLU: only keep positive contributions (what activated the class)
-        cam = torch.relu(cam).numpy()
+        cam = torch.relu(cam).cpu().numpy()
 
         # Normalise to 0-1 range
         if cam.max() > 0:
@@ -257,7 +257,7 @@ def predict(image_path):
     apply_heatmap_overlay(image_path, cam, heatmap_path)
 
     # ── 5. Build all-class probability scores ─────────
-    probs_np   = probabilities.squeeze().detach().numpy()
+    probs_np   = probabilities.squeeze().detach().cpu().numpy()
     all_scores = {
         CLASS_NAMES[i]: round(float(probs_np[i]) * 100, 1)
         for i in range(NUM_CLASSES)
