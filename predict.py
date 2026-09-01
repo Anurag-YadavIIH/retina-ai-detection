@@ -28,7 +28,7 @@ from utils.preprocess import (
 # CONFIGURATION
 # ─────────────────────────────────────────────
 
-MODEL_PATH  = "model/retina_model.pth"
+MODEL_PATH  = "model/retina_model_weighted.pth"
 NUM_CLASSES = 5
 DEVICE      = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
